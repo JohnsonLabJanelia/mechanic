@@ -176,7 +176,11 @@ class TensorRTConverterGUI:
     def run_conversion(self):
         """Run the conversion commands"""
         try:
+            # Get the user's current shell
+            user_shell = os.environ.get('SHELL', '/bin/sh')
+            
             self.log_message("Starting TensorRT conversion...")
+            self.log_message(f"Using shell: {user_shell}")
             self.log_message(f"Input file: {self.pt_file_path.get()}")
             self.log_message(f"TensorRT path: {self.tensorrt_path.get()}")
             self.log_message(f"Output name: {self.output_name.get()}")
@@ -191,7 +195,7 @@ class TensorRTConverterGUI:
             
             # TODO: add commands
             commands = [
-                # f". {os.getcwd()}/venv/bin/activate",
+                f". {os.getcwd()}/venv/bin/activate",
                 f"pip install -r {os.getcwd()}/requirements.txt",
                 f"python {os.getcwd()}/export_det.py --weights {self.pt_file_path.get()} "
                 f"--iou-thres {self.iou_threshold.get()} " 
@@ -218,6 +222,7 @@ class TensorRTConverterGUI:
                 process = subprocess.Popen(
                     command,
                     shell=True,
+                    executable=user_shell,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     universal_newlines=True,
