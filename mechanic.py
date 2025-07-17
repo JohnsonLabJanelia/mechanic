@@ -21,7 +21,7 @@ class TensorRTConverterGUI:
         self.topk = tk.StringVar(value="1")
         self.input_shape = tk.StringVar(value="1 3 640 640")
         self.gpu_device = tk.StringVar(value="0")
-        self.precision = tk.StringVar(value="fp32")
+        self.precision = tk.StringVar(value="fp16")
         
         self.setup_gui()
         
@@ -64,7 +64,7 @@ class TensorRTConverterGUI:
         ttk.Entry(main_frame, textvariable=self.gpu_device, width=50).grid(row=8, column=1, sticky=(tk.W, tk.E), padx=5)
         
         ttk.Label(main_frame, text="Precision:").grid(row=9, column=0, sticky=tk.W, pady=5)
-        ttk.Combobox(main_frame, textvariable=self.precision, values=["int8", "fp16", "fp32"], state="readonly", width=47).grid(row=9, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Combobox(main_frame, textvariable=self.precision, values=["int8", "fp16"], state="readonly", width=47).grid(row=9, column=1, sticky=(tk.W, tk.E), padx=5)
         
         self.convert_button = ttk.Button(main_frame, text="Convert", command=self.start_conversion)
         self.convert_button.grid(row=10, column=1, pady=20)
@@ -195,9 +195,9 @@ class TensorRTConverterGUI:
             
             # TODO: add commands
             commands = [
-                f". {os.getcwd()}/venv/bin/activate",
+                f"source {os.getcwd()}/.venv/bin/activate",
                 f"pip install -r {os.getcwd()}/requirements.txt",
-                f"python {os.getcwd()}/export_det.py --weights {self.pt_file_path.get()} "
+                f"python3 {os.getcwd()}/export_det.py --weights {self.pt_file_path.get()} "
                 f"--iou-thres {self.iou_threshold.get()} " 
                 f"--conf-thres {self.confidence_threshold.get()} "
                 f"--topk {self.topk.get()} "
@@ -208,7 +208,7 @@ class TensorRTConverterGUI:
                 f"{self.tensorrt_path.get()}/trtexec --onnx={self.pt_file_path.get().replace('.pt', '.onnx')} "
                 f"--saveEngine={os.path.join(self.output_location.get(), self.output_name.get()).replace('.pt', '.engine')} "
                 f"--device={self.gpu_device.get()} "
-                f"--{self.precision.get()}" if self.precision.get() else "fp32"
+                f"--{self.precision.get()}" if self.precision.get() else "fp16"
             ]
             
             if not commands:
