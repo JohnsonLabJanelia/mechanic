@@ -222,10 +222,6 @@ class TensorRTConverterGUI:
                         f"--device={self.gpu_device.get()} "
                         f"--{self.precision.get()}" if self.precision.get() else "fp16"
                     ]
-                    
-            
-            for command in commands:
-                print(command)
 
             if not commands:
                 self.log_message("Please add your conversion commands to the run_conversion method")
