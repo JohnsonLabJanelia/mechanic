@@ -1,6 +1,6 @@
 # mechanic
 
-Adapted from [YOLOv8-TensorRT](https://github.com/triple-Mu/YOLOv8-TensorRT), we deploy realtime YOLO models via [Nividia TensorRT](https://developer.nvidia.com/tensorrt). 
+Using [YOLOv8-TensorRT](https://github.com/triple-Mu/YOLOv8-TensorRT) and [Nividia TensorRT](https://developer.nvidia.com/tensorrt). 
 
 YOLO engine file compiler with an easy to use GUI interface.
 
