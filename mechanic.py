@@ -4,6 +4,7 @@ import subprocess
 import threading
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 class TensorRTConverterGUI:
     def __init__(self, root):
@@ -12,7 +13,8 @@ class TensorRTConverterGUI:
         self.root.geometry("800x700")
         
         self.pt_file_path = tk.StringVar()
-        self.tensorrt_path = tk.StringVar()
+        load_dotenv()
+        self.tensorrt_path = tk.StringVar(value=os.getenv('TENSOR_RT_PATH'))
         self.output_name = tk.StringVar()
         self.output_location = tk.StringVar()
         
@@ -48,10 +50,10 @@ class TensorRTConverterGUI:
         ttk.Entry(main_frame, textvariable=self.output_location, width=50).grid(row=3, column=1, sticky=(tk.W, tk.E), padx=5)
         ttk.Button(main_frame, text="Browse", command=self.browse_output_location).grid(row=3, column=2, padx=5)
         
-        ttk.Label(main_frame, text="IOU threshold:").grid(row=4, column=0, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, text="IOU threshold(s):").grid(row=4, column=0, sticky=tk.W, pady=5)
         ttk.Entry(main_frame, textvariable=self.iou_threshold, width=50).grid(row=4, column=1, sticky=(tk.W, tk.E), padx=5)
         
-        ttk.Label(main_frame, text="Confidence threshold:").grid(row=5, column=0, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, text="Confidence threshold(s):").grid(row=5, column=0, sticky=tk.W, pady=5)
         ttk.Entry(main_frame, textvariable=self.confidence_threshold, width=50).grid(row=5, column=1, sticky=(tk.W, tk.E), padx=5)
         
         ttk.Label(main_frame, text="Maximum bounding boxes:").grid(row=6, column=0, sticky=tk.W, pady=5)
@@ -185,32 +187,42 @@ class TensorRTConverterGUI:
             self.log_message(f"TensorRT path: {self.tensorrt_path.get()}")
             self.log_message(f"Output name: {self.output_name.get()}")
             self.log_message(f"Output location: {self.output_location.get()}")
-            self.log_message(f"IOU threshold: {self.iou_threshold.get()}")
-            self.log_message(f"Confidence threshold: {self.confidence_threshold.get()}")
+            self.log_message(f"IOU threshold(s): {self.iou_threshold.get().split(' ')}")
+            self.log_message(f"Confidence threshold(s): {self.confidence_threshold.get().split(' ')}")
             self.log_message(f"Top K: {self.topk.get()}")
             self.log_message(f"Input shape: {self.input_shape.get()}")
             self.log_message(f"GPU device: {self.gpu_device.get()}")
             self.log_message(f"Precision: {self.precision.get()}")
             self.log_message("-" * 50)
             
+
             # TODO: add commands
             commands = [
                 f"source {os.getcwd()}/.venv/bin/activate",
                 f"pip install -r {os.getcwd()}/requirements.txt",
-                f"python3 {os.getcwd()}/export_det.py --weights {self.pt_file_path.get()} "
-                f"--iou-thres {self.iou_threshold.get()} " 
-                f"--conf-thres {self.confidence_threshold.get()} "
-                f"--topk {self.topk.get()} "
-                f"--input-shape {self.input_shape.get()} "
-                f"--device cuda:{self.gpu_device.get()} "
-                f"--opset 11 "
-                f"--sim ",
-                f"{self.tensorrt_path.get()}/trtexec --onnx={self.pt_file_path.get().replace('.pt', '.onnx')} "
-                f"--saveEngine={os.path.join(self.output_location.get(), self.output_name.get()).replace('.pt', '.engine')} "
-                f"--device={self.gpu_device.get()} "
-                f"--{self.precision.get()}" if self.precision.get() else "fp16"
             ]
+
+            iou_thresholds = self.iou_threshold.get().split(" ")
+            confidence_thresholds = self.confidence_threshold.get().split(" ")
             
+            for iou_thresh in iou_thresholds:
+                for confidence_thresh in confidence_thresholds:
+                    iou_conf_suffix= f"_iou{''.join(iou_thresh.split('.'))}_conf{''.join(confidence_thresh.split('.'))}"
+                    commands+= [
+                        f"python3 {os.getcwd()}/export_det.py --weights {self.pt_file_path.get()} "
+                        f"--iou-thres {iou_thresh} " 
+                        f"--conf-thres {confidence_thresh} "
+                        f"--topk {self.topk.get()} "
+                        f"--input-shape {self.input_shape.get()} "
+                        f"--device cuda:{self.gpu_device.get()} "
+                        f"--opset 11 "
+                        f"--sim ",
+                        f"{self.tensorrt_path.get()}/trtexec --onnx={self.pt_file_path.get().replace('.pt', '.onnx')} "
+                        f"--saveEngine={os.path.join(self.output_location.get(), self.output_name.get() + iou_conf_suffix + '.engine').replace('.pt', '')} "
+                        f"--device={self.gpu_device.get()} "
+                        f"--{self.precision.get()}" if self.precision.get() else "fp16"
+                    ]
+
             if not commands:
                 self.log_message("Please add your conversion commands to the run_conversion method")
                 return
@@ -241,10 +253,10 @@ class TensorRTConverterGUI:
                     self.log_message(f"Step {i} completed successfully")
                     
             self.log_message("-" * 50)
-            self.log_message("Conversion completed successfully!")
+            self.log_message("Conversion(s) completed successfully!")
             
         except Exception as e:
-            self.log_message(f"Error during conversion: {str(e)}")
+            self.log_message(f"Error during conversion(s): {str(e)}")
             
         finally:
             self.root.after(0, lambda: self.convert_button.config(state='normal'))
