@@ -5,6 +5,7 @@ import threading
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from datetime import datetime
 
 class TensorRTConverterGUI:
     def __init__(self, root):
@@ -25,7 +26,8 @@ class TensorRTConverterGUI:
         self.tensorrt_path = tk.StringVar(value=os.getenv('TENSOR_RT_PATH'))
         self.pt_file_path = tk.StringVar()
         self.output_location = tk.StringVar(value=os.getenv('OUTPUT_PATH'))
-        self.output_name = tk.StringVar(value="yolomodel")
+        now = datetime.now()
+        self.output_name = tk.StringVar(value=f"yolomodel_{now.strftime('%Y-%m-%d_%H-%M-%S')}")
         self.iou_threshold = tk.StringVar(value="0.5")
         self.confidence_threshold = tk.StringVar(value="0.25")
         self.topk = tk.StringVar(value="1")
@@ -39,6 +41,9 @@ class TensorRTConverterGUI:
         self.setup_gui()
         
     def setup_gui(self):
+        style = ttk.Style(self.root)
+        style.theme_use("clam")
+
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
@@ -46,9 +51,26 @@ class TensorRTConverterGUI:
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
 
-        style = ttk.Style(self.root)
-        style.theme_use("clam")
+        # Define a bold font
         bold_font = font.Font(weight="bold")
+
+        # Number validation functions
+        def validate_number(char):
+            """Validate that the character is a digit"""
+            return char.isdigit()
+        
+        def validate_decimal(char):
+            """Validate that the character is a digit or decimal point"""
+            return char.isdigit() or char == '.'
+        
+        def validate_input_shape(char):
+            """Validate that the character is a digit or space"""
+            return char.isdigit() or char == ' '
+
+        # Register validation functions
+        vcmd_int = (self.root.register(validate_number), '%S')
+        vcmd_float = (self.root.register(validate_decimal), '%S')
+        vcmd_shape = (self.root.register(validate_input_shape), '%S')
 
         # Training Section
         ttk.Label(main_frame, text="Training", font=bold_font).grid(row=0, column=0, columnspan=3, pady=10)
@@ -65,10 +87,10 @@ class TensorRTConverterGUI:
         ttk.Combobox(main_frame, textvariable=self.model, values=["yolov8n.pt", "yolov8s.pt", "yolov8m.pt", "yolov8l.pt", "yolov8x.pt"], state="readonly", width=48).grid(row=3, column=1, sticky=(tk.W, tk.E), padx=5)
 
         ttk.Label(main_frame, text="Epochs:").grid(row=4, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.epochs, width=50).grid(row=4, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Entry(main_frame, textvariable=self.epochs, validate='key', validatecommand=vcmd_int, width=50).grid(row=4, column=1, sticky=(tk.W, tk.E), padx=5)
 
         ttk.Label(main_frame, text="Image size:").grid(row=5, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.imgsz, width=50).grid(row=5, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Entry(main_frame, textvariable=self.imgsz, validate='key', validatecommand=vcmd_int, width=50).grid(row=5, column=1, sticky=(tk.W, tk.E), padx=5)
 
         # Conversion Section
         ttk.Label(main_frame, text="Conversion", font=bold_font).grid(row=6, column=0, columnspan=3, pady=10)
@@ -89,19 +111,19 @@ class TensorRTConverterGUI:
         ttk.Entry(main_frame, textvariable=self.output_name, width=50).grid(row=10, column=1, sticky=(tk.W, tk.E), padx=5)
 
         ttk.Label(main_frame, text="IOU threshold(s):").grid(row=11, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.iou_threshold, width=50).grid(row=11, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Entry(main_frame, textvariable=self.iou_threshold, validate='key', validatecommand=vcmd_float, width=50).grid(row=11, column=1, sticky=(tk.W, tk.E), padx=5)
 
         ttk.Label(main_frame, text="Confidence threshold(s):").grid(row=12, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.confidence_threshold, width=50).grid(row=12, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Entry(main_frame, textvariable=self.confidence_threshold, validate='key', validatecommand=vcmd_float, width=50).grid(row=12, column=1, sticky=(tk.W, tk.E), padx=5)
 
         ttk.Label(main_frame, text="Maximum bounding boxes:").grid(row=13, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.topk, width=50).grid(row=13, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Entry(main_frame, textvariable=self.topk, validate='key', validatecommand=vcmd_int, width=50).grid(row=13, column=1, sticky=(tk.W, tk.E), padx=5)
 
         ttk.Label(main_frame, text="Input shape:").grid(row=14, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.input_shape, width=50).grid(row=14, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Entry(main_frame, textvariable=self.input_shape, validate='key', validatecommand=vcmd_shape, width=50).grid(row=14, column=1, sticky=(tk.W, tk.E), padx=5)
 
         ttk.Label(main_frame, text="GPU device:").grid(row=15, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.gpu_device, width=50).grid(row=15, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Entry(main_frame, textvariable=self.gpu_device, validate='key', validatecommand=vcmd_int, width=50).grid(row=15, column=1, sticky=(tk.W, tk.E), padx=5)
 
         ttk.Label(main_frame, text="Precision:").grid(row=16, column=0, sticky=tk.W, pady=5)
         ttk.Combobox(main_frame, textvariable=self.precision, values=["fp16", "int8"], state="readonly", width=47).grid(row=16, column=1, sticky=(tk.W, tk.E), padx=5)
@@ -113,10 +135,10 @@ class TensorRTConverterGUI:
         self.run_button = ttk.Button(main_frame, text="Run", command=self.start)
         self.run_button.grid(row=18, column=1, pady=5)
 
-        ttk.Label(main_frame, text="Progress:").grid(row=19, column=0, sticky=(tk.W, tk.N), pady=5)
+        ttk.Label(main_frame, text="Progress:").grid(row=19, column=0, sticky=(tk.W, tk.N), pady=20)
 
         text_frame = ttk.Frame(main_frame)
-        text_frame.grid(row=19, column=1, columnspan=1, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+        text_frame.grid(row=19, column=1, columnspan=1, sticky=(tk.W, tk.E, tk.N, tk.S), pady=20)
         text_frame.columnconfigure(0, weight=1)
         text_frame.rowconfigure(0, weight=1)
 
@@ -205,7 +227,7 @@ class TensorRTConverterGUI:
         if not os.path.exists(self.pt_file_path.get()) and self.mode.get() == "CONVERT":
             messagebox.showerror("Error", ".pt file location does not exist")
             return False
-        
+                
         if self.input_shape.get() != f"1 3 {self.imgsz.get()} {self.imgsz.get()}" and self.mode.get() == "TRAIN & CONVERT":
             messagebox.showerror("Error", "3rd and 4th values of Input shape must match the image size")
             return False
