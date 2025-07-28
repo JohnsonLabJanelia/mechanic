@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from datetime import datetime
+import re
 
 class TensorRTConverterGUI:
     def __init__(self, root):
@@ -53,6 +54,7 @@ class TensorRTConverterGUI:
 
         # Define a bold font
         bold_font = font.Font(weight="bold")
+        small_bold_font = font.Font(size=10, weight="bold")
 
         # Number validation functions
         def validate_number(char):
@@ -103,11 +105,11 @@ class TensorRTConverterGUI:
         ttk.Entry(main_frame, textvariable=self.pt_file_path, width=50).grid(row=8, column=1, sticky=(tk.W, tk.E), padx=5)
         ttk.Button(main_frame, text="Browse", command=self.browse_pt_file).grid(row=8, column=2, padx=5)
 
-        ttk.Label(main_frame, text="Output location:").grid(row=9, column=0, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, text="Output location:", font=small_bold_font).grid(row=9, column=0, sticky=tk.W, pady=5)
         ttk.Entry(main_frame, textvariable=self.output_location, width=50).grid(row=9, column=1, sticky=(tk.W, tk.E), padx=5)
         ttk.Button(main_frame, text="Browse", command=self.browse_output_location).grid(row=9, column=2, padx=5)
 
-        ttk.Label(main_frame, text="Output file name:").grid(row=10, column=0, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, text="Output file name:", font=small_bold_font).grid(row=10, column=0, sticky=tk.W, pady=5)
         ttk.Entry(main_frame, textvariable=self.output_name, width=50).grid(row=10, column=1, sticky=(tk.W, tk.E), padx=5)
 
         ttk.Label(main_frame, text="IOU threshold(s):").grid(row=11, column=0, sticky=tk.W, pady=5)
@@ -208,15 +210,15 @@ class TensorRTConverterGUI:
             messagebox.showerror("Error", "Data folder does not exist")
             return False
             
-        if not self.output_name.get() and self.mode.get() in ["CONVERT", "TRAIN & CONVERT"]:
+        if not self.output_name.get():
             messagebox.showerror("Error", "Please enter an output file name")
             return False
             
-        if not self.output_location.get() and self.mode.get() in ["CONVERT", "TRAIN & CONVERT"]:
+        if not self.output_location.get():
             messagebox.showerror("Error", "Please select an output location")
             return False
             
-        if not os.path.exists(self.output_location.get()) and self.mode.get() in ["CONVERT", "TRAIN & CONVERT"]:
+        if not os.path.exists(self.output_location.get()):
             messagebox.showerror("Error", "Output location does not exist")
             return False
         
@@ -271,6 +273,13 @@ class TensorRTConverterGUI:
         train_conversion_thread.start()
         
     def run(self):
+
+        now = datetime.now()
+        
+        pattern = r'^yolomodel_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}$'
+        if re.match(pattern, self.output_name.get()):
+            self.output_name.set(f"yolomodel_{now.strftime('%Y-%m-%d_%H-%M-%S')}")
+
         """Run the commands"""
         try:
             # Get the user's current shell
@@ -293,6 +302,9 @@ class TensorRTConverterGUI:
             self.log_message(f"GPU device: {self.gpu_device.get()}")
             self.log_message(f"Precision: {self.precision.get()}")
             self.log_message("-" * 50)
+
+            if self.mode.get() in ["TRAIN", "TRAIN & CONVERT"]:
+                self.set_pt_path()
             
             train_commands = [
                 f"source {self.yolo_path.get()}/.venv/bin/activate",
@@ -304,6 +316,7 @@ class TensorRTConverterGUI:
                 f"data={self.data_folder.get()}/data.yaml "
                 f"epochs={self.epochs.get()} "
                 f"imgsz={self.imgsz.get()} ",
+                f"cp {self.pt_file_path.get()} {self.output_location.get()}/{self.output_name.get()}.pt"
             ]
 
             convert_commands = [
@@ -313,9 +326,6 @@ class TensorRTConverterGUI:
 
             iou_thresholds = self.iou_threshold.get().split(" ")
             confidence_thresholds = self.confidence_threshold.get().split(" ")
-            
-            if self.mode.get() == "TRAIN & CONVERT":
-                self.set_pt_path()
 
             for iou_thresh in iou_thresholds:
                 for confidence_thresh in confidence_thresholds:
