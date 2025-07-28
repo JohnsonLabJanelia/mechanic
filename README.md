@@ -26,6 +26,7 @@ TASK = "task"
 1. Run mechanic: `python mechanic.py`.
 
 2. All fields in .env file will be automatically inputted into the GUI and some fields will have default values. Modify fields to desired values, and ensure that required fields are filled in. 
+    - Bold font means a field is required for all modes
     - If required fields are invalid, program won't run and popup will denote which field(s) is invalid.
 
 3. Mechanic has three modes:
@@ -35,4 +36,4 @@ TASK = "task"
 
 4. Some fields only need to be inputted for specific modes, for example input file is only required if the mode is `CONVERT`.
 
-5. When the mode is set to `TRAIN` or `TRAIN & CONVERT` the best.pt file is outputted in the latest train folder in `YOLO_PATH/runs/detect/train#`, with the specific path specified in the YOLO terminal output.
+5. When the mode is set to `TRAIN` or `TRAIN & CONVERT` the best.pt file is outputted in the latest train folder in `YOLO_PATH/runs/detect/train#` and copied into the user specified output directory.
