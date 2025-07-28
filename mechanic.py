@@ -18,7 +18,12 @@ class TensorRTConverterGUI:
         # File name and path variables
         self.yolo_path = tk.StringVar(value=os.getenv('YOLO_PATH'))
         self.data_folder = tk.StringVar()
+        self.task = tk.StringVar(value="detect")
+
+        self.detect_models = ["yolov8n.pt", "yolov8s.pt", "yolov8m.pt", "yolov8l.pt", "yolov8x.pt"]
+        self.pose_models = ["yolov8n-pose.pt", "yolov8s-pose.pt", "yolov8m-pose.pt", "yolov8l-pose.pt", "yolov8x-pose.pt"]
         self.model = tk.StringVar(value="yolov8n.pt")
+
         self.epochs = tk.StringVar(value="100")
         self.imgsz = tk.StringVar(value="640")
 
@@ -83,62 +88,65 @@ class TensorRTConverterGUI:
         ttk.Entry(main_frame, textvariable=self.data_folder, width=50).grid(row=2, column=1, sticky=(tk.W, tk.E), padx=5)
         ttk.Button(main_frame, text="Browse", command=self.browse_data_folder).grid(row=2, column=2, padx=5)
 
-        ttk.Label(main_frame, text="Model:").grid(row=3, column=0, sticky=tk.W, pady=5)
-        ttk.Combobox(main_frame, textvariable=self.model, values=["yolov8n.pt", "yolov8s.pt", "yolov8m.pt", "yolov8l.pt", "yolov8x.pt"], state="readonly", width=48).grid(row=3, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Label(main_frame, text="Task:").grid(row=3, column=0, sticky=tk.W, pady=5)
+        ttk.Combobox(main_frame, textvariable=self.task, values=["detect", "pose"], state="readonly", width=48).grid(row=3, column=1, sticky=(tk.W, tk.E), padx=5)
 
-        ttk.Label(main_frame, text="Epochs:").grid(row=4, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.epochs, validate='key', validatecommand=vcmd_int, width=50).grid(row=4, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Label(main_frame, text="Model:").grid(row=4, column=0, sticky=tk.W, pady=5)
+        ttk.Combobox(main_frame, textvariable=self.model, values=self.detect_models+self.pose_models, state="readonly", width=48).grid(row=4, column=1, sticky=(tk.W, tk.E), padx=5)
 
-        ttk.Label(main_frame, text="Image size:").grid(row=5, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.imgsz, validate='key', validatecommand=vcmd_int, width=50).grid(row=5, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Label(main_frame, text="Epochs:").grid(row=5, column=0, sticky=tk.W, pady=5)
+        ttk.Entry(main_frame, textvariable=self.epochs, validate='key', validatecommand=vcmd_int, width=50).grid(row=5, column=1, sticky=(tk.W, tk.E), padx=5)
+
+        ttk.Label(main_frame, text="Image size:").grid(row=6, column=0, sticky=tk.W, pady=5)
+        ttk.Entry(main_frame, textvariable=self.imgsz, validate='key', validatecommand=vcmd_int, width=50).grid(row=6, column=1, sticky=(tk.W, tk.E), padx=5)
 
         # Conversion Section
-        ttk.Label(main_frame, text="Conversion", font=bold_font).grid(row=6, column=0, columnspan=3, pady=10)
+        ttk.Label(main_frame, text="Conversion", font=bold_font).grid(row=7, column=0, columnspan=3, pady=10)
 
-        ttk.Label(main_frame, text="TensorRT install location:").grid(row=7, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.tensorrt_path, width=50).grid(row=7, column=1, sticky=(tk.W, tk.E), padx=5)
-        ttk.Button(main_frame, text="Browse", command=self.browse_tensorrt_path).grid(row=7, column=2, padx=5)
+        ttk.Label(main_frame, text="TensorRT install location:").grid(row=8, column=0, sticky=tk.W, pady=5)
+        ttk.Entry(main_frame, textvariable=self.tensorrt_path, width=50).grid(row=8, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Button(main_frame, text="Browse", command=self.browse_tensorrt_path).grid(row=8, column=2, padx=5)
 
-        ttk.Label(main_frame, text="Input file location:").grid(row=8, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.pt_file_path, width=50).grid(row=8, column=1, sticky=(tk.W, tk.E), padx=5)
-        ttk.Button(main_frame, text="Browse", command=self.browse_pt_file).grid(row=8, column=2, padx=5)
+        ttk.Label(main_frame, text="Input file location:").grid(row=9, column=0, sticky=tk.W, pady=5)
+        ttk.Entry(main_frame, textvariable=self.pt_file_path, width=50).grid(row=9, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Button(main_frame, text="Browse", command=self.browse_pt_file).grid(row=9, column=2, padx=5)
 
-        ttk.Label(main_frame, text="Output location:").grid(row=9, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.output_location, width=50).grid(row=9, column=1, sticky=(tk.W, tk.E), padx=5)
-        ttk.Button(main_frame, text="Browse", command=self.browse_output_location).grid(row=9, column=2, padx=5)
+        ttk.Label(main_frame, text="Output location:").grid(row=10, column=0, sticky=tk.W, pady=5)
+        ttk.Entry(main_frame, textvariable=self.output_location, width=50).grid(row=10, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Button(main_frame, text="Browse", command=self.browse_output_location).grid(row=10, column=2, padx=5)
 
-        ttk.Label(main_frame, text="Output file name:").grid(row=10, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.output_name, width=50).grid(row=10, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Label(main_frame, text="Output file name:").grid(row=11, column=0, sticky=tk.W, pady=5)
+        ttk.Entry(main_frame, textvariable=self.output_name, width=50).grid(row=11, column=1, sticky=(tk.W, tk.E), padx=5)
 
-        ttk.Label(main_frame, text="IOU threshold(s):").grid(row=11, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.iou_threshold, validate='key', validatecommand=vcmd_float, width=50).grid(row=11, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Label(main_frame, text="IOU threshold(s):").grid(row=12, column=0, sticky=tk.W, pady=5)
+        ttk.Entry(main_frame, textvariable=self.iou_threshold, validate='key', validatecommand=vcmd_float, width=50).grid(row=12, column=1, sticky=(tk.W, tk.E), padx=5)
 
-        ttk.Label(main_frame, text="Confidence threshold(s):").grid(row=12, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.confidence_threshold, validate='key', validatecommand=vcmd_float, width=50).grid(row=12, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Label(main_frame, text="Confidence threshold(s):").grid(row=13, column=0, sticky=tk.W, pady=5)
+        ttk.Entry(main_frame, textvariable=self.confidence_threshold, validate='key', validatecommand=vcmd_float, width=50).grid(row=13, column=1, sticky=(tk.W, tk.E), padx=5)
 
-        ttk.Label(main_frame, text="Maximum bounding boxes:").grid(row=13, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.topk, validate='key', validatecommand=vcmd_int, width=50).grid(row=13, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Label(main_frame, text="Maximum bounding boxes:").grid(row=14, column=0, sticky=tk.W, pady=5)
+        ttk.Entry(main_frame, textvariable=self.topk, validate='key', validatecommand=vcmd_int, width=50).grid(row=14, column=1, sticky=(tk.W, tk.E), padx=5)
 
-        ttk.Label(main_frame, text="Input shape:").grid(row=14, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.input_shape, validate='key', validatecommand=vcmd_shape, width=50).grid(row=14, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Label(main_frame, text="Input shape:").grid(row=15, column=0, sticky=tk.W, pady=5)
+        ttk.Entry(main_frame, textvariable=self.input_shape, validate='key', validatecommand=vcmd_shape, width=50).grid(row=15, column=1, sticky=(tk.W, tk.E), padx=5)
 
-        ttk.Label(main_frame, text="GPU device:").grid(row=15, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(main_frame, textvariable=self.gpu_device, validate='key', validatecommand=vcmd_int, width=50).grid(row=15, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Label(main_frame, text="GPU device:").grid(row=16, column=0, sticky=tk.W, pady=5)
+        ttk.Entry(main_frame, textvariable=self.gpu_device, validate='key', validatecommand=vcmd_int, width=50).grid(row=16, column=1, sticky=(tk.W, tk.E), padx=5)
 
-        ttk.Label(main_frame, text="Precision:").grid(row=16, column=0, sticky=tk.W, pady=5)
-        ttk.Combobox(main_frame, textvariable=self.precision, values=["fp16", "int8"], state="readonly", width=47).grid(row=16, column=1, sticky=(tk.W, tk.E), padx=5)
+        ttk.Label(main_frame, text="Precision:").grid(row=17, column=0, sticky=tk.W, pady=5)
+        ttk.Combobox(main_frame, textvariable=self.precision, values=["fp16", "int8"], state="readonly", width=47).grid(row=17, column=1, sticky=(tk.W, tk.E), padx=5)
 
-        ttk.Label(main_frame, text="Mode:").grid(row=17, column=0, sticky=tk.W, pady=20)
-        ttk.Combobox(main_frame, textvariable=self.mode, values=["TRAIN & CONVERT", "TRAIN", "CONVERT"], state="readonly", width=47).grid(row=17, column=1, sticky=(tk.W, tk.E), padx=5, pady=20)
+        ttk.Label(main_frame, text="Mode:").grid(row=18, column=0, sticky=tk.W, pady=20)
+        ttk.Combobox(main_frame, textvariable=self.mode, values=["TRAIN & CONVERT", "TRAIN", "CONVERT"], state="readonly", width=47).grid(row=18, column=1, sticky=(tk.W, tk.E), padx=5, pady=20)
 
         # Run button and progress text area
         self.run_button = ttk.Button(main_frame, text="Run", command=self.start)
-        self.run_button.grid(row=18, column=1, pady=5)
+        self.run_button.grid(row=19, column=1, pady=5)
 
-        ttk.Label(main_frame, text="Progress:").grid(row=19, column=0, sticky=(tk.W, tk.N), pady=20)
+        ttk.Label(main_frame, text="Progress:").grid(row=20, column=0, sticky=(tk.W, tk.N), pady=20)
 
         text_frame = ttk.Frame(main_frame)
-        text_frame.grid(row=19, column=1, columnspan=1, sticky=(tk.W, tk.E, tk.N, tk.S), pady=20)
+        text_frame.grid(row=20, column=1, columnspan=1, sticky=(tk.W, tk.E, tk.N, tk.S), pady=20)
         text_frame.columnconfigure(0, weight=1)
         text_frame.rowconfigure(0, weight=1)
 
@@ -149,7 +157,7 @@ class TensorRTConverterGUI:
         self.progress_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         scrollbar.grid(row=0, column=1, sticky=(tk.N, tk.S))
 
-        main_frame.rowconfigure(19, weight=1)
+        main_frame.rowconfigure(20, weight=1)
         
     def browse_yolo_path(self):
         directory = filedialog.askdirectory(title="Select YOLOv8-TensorRT installation directory")
@@ -231,6 +239,10 @@ class TensorRTConverterGUI:
         if self.input_shape.get() != f"1 3 {self.imgsz.get()} {self.imgsz.get()}" and self.mode.get() == "TRAIN & CONVERT":
             messagebox.showerror("Error", "3rd and 4th values of Input shape must match the image size")
             return False
+        
+        if (self.task.get() == "detect" and self.model.get() not in self.detect_models) or (self.task.get() == "pose" and self.model.get() not in self.pose_models and self.mode.get() in ["TRAIN", "TRAIN & CONVERT"]):
+            messagebox.showerror("Error", "Incorrect model for selected task") 
+            return False
             
         return True
     
@@ -298,7 +310,7 @@ class TensorRTConverterGUI:
                 f"source {self.yolo_path.get()}/.venv/bin/activate",
                 f"pip install ultralytics",
                 f"yolo "
-                f"task=detect "
+                f"task={self.task.get()} "
                 f"mode=train "
                 f"model={self.model.get()} " 
                 f"data={self.data_folder.get()}/data.yaml "

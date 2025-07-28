@@ -19,7 +19,7 @@ YOLO_PATH = "/path/to/yolo"
 TENSORT_RT_PATH = "/path/to/tensorrt"
 OUTPUT_PATH = "/path/to/output"
 GPU_DEVICE = "gpu#"
-MODE = "mode"
+TASK = "task"
 ```
 ## Usage
 
