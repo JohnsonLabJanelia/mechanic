@@ -57,9 +57,10 @@ class TensorRTConverterGUI:
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
 
-        # Define a bold font
+        # Define a bold font and a small bold font
         bold_font = font.Font(weight="bold")
-        small_bold_font = font.Font(size=10, weight="bold")
+        small_bold_font = font.nametofont("TkDefaultFont").copy()
+        small_bold_font.configure(weight="bold")
 
         # Number validation functions
         def validate_number(char):
