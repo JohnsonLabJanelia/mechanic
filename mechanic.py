@@ -343,21 +343,33 @@ class TensorRTConverterGUI:
             for iou_thresh in iou_thresholds:
                 for confidence_thresh in confidence_thresholds:
                     iou_conf_suffix= f"_iou{''.join(iou_thresh.split('.'))}_conf{''.join(confidence_thresh.split('.'))}"
+                    if self.task.get() == "detect":
+                        convert_commands += [
+                            f"source {self.yolo_path.get()}/.venv/bin/activate",
+                            f"pip install ultralytics",
+                            f"yolo "
+                            f"export "
+                            f"model={self.model.get()} "
+                            f"format=onnx "
+                            f"opset=11 "
+                            f"simplify=True ",
+                        ]
+                    elif self.task.get() == "pose":
+                        convert_commands += [
+                            f"python3 {os.getcwd()}/export_pose.py --weights {self.pt_file_path.get()} "
+                            f"--iou-thres {iou_thresh} " 
+                            f"--conf-thres {confidence_thresh} "
+                            f"--topk {self.topk.get()} "
+                            f"--input-shape {self.input_shape.get()} "
+                            f"--device cuda:{self.gpu_device.get()} "
+                            f"--opset 11 ",
+                        ]
                     convert_commands+= [
-                        f"python3 {os.getcwd()}/export_det.py --weights {self.pt_file_path.get()} "
-                        f"--iou-thres {iou_thresh} " 
-                        f"--conf-thres {confidence_thresh} "
-                        f"--topk {self.topk.get()} "
-                        f"--input-shape {self.input_shape.get()} "
-                        f"--device cuda:{self.gpu_device.get()} "
-                        f"--opset 11 "
-                        f"--sim ",
                         f"{self.tensorrt_path.get()}/trtexec --onnx={self.pt_file_path.get().replace('.pt', '.onnx')} "
                         f"--saveEngine={os.path.join(self.output_location.get(), self.output_name.get() + iou_conf_suffix + '.engine').replace('.pt', '')} "
                         f"--device={self.gpu_device.get()} "
                         f"--{self.precision.get()}" if self.precision.get() else "fp16"
                     ]
-
 
             if self.mode.get() == "TRAIN & CONVERT":
                 commands = train_commands + convert_commands
