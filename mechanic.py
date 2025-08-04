@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 import re
 
-class TensorRTConverterGUI:
+class mechanicGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("mechanic")
@@ -251,7 +251,7 @@ class TensorRTConverterGUI:
     
     def set_pt_path(self):
         """Get the path to the best.pt file from the latest training run"""
-        runs_path = os.path.join(self.yolo_path.get(), "runs", "detect")
+        runs_path = os.path.join(self.yolo_path.get(), "runs", self.task.get())
         if not os.path.exists(runs_path):
             messagebox.showerror("Error", "Runs path does not exist")
             return None
@@ -259,8 +259,8 @@ class TensorRTConverterGUI:
         new_run = "train"
         # Filter directories that start with "train" and sort by the numeric part
         sorted_dirs = sorted(
-            [d for d in os.listdir(runs_path) if d.startswith("train") and d[5:].isdigit()],
-            key=lambda d: int(d[5:])  # Extract and sort by the numeric part
+            [d for d in os.listdir(runs_path) if d.startswith("train") and os.path.isdir(os.path.join(runs_path, d))],
+            key=lambda d: int(d[5:]) if d[5:].isdigit() else 0
         )
 
         if sorted_dirs:
@@ -343,20 +343,20 @@ class TensorRTConverterGUI:
             for iou_thresh in iou_thresholds:
                 for confidence_thresh in confidence_thresholds:
                     iou_conf_suffix= f"_iou{''.join(iou_thresh.split('.'))}_conf{''.join(confidence_thresh.split('.'))}"
-                    if self.task.get() == "detect":
+                    if self.task.get() == "pose" and ".pt" in self.pt_file_path.get():
                         convert_commands += [
                             f"source {self.yolo_path.get()}/.venv/bin/activate",
                             f"pip install ultralytics",
                             f"yolo "
                             f"export "
-                            f"model={self.model.get()} "
+                            f"model={self.pt_file_path.get()} "
                             f"format=onnx "
                             f"opset=11 "
                             f"simplify=True ",
                         ]
-                    elif self.task.get() == "pose":
+                    elif self.task.get() == "detect" and ".pt" in self.pt_file_path.get():
                         convert_commands += [
-                            f"python3 {os.getcwd()}/export_pose.py --weights {self.pt_file_path.get()} "
+                            f"python3 {os.getcwd()}/export_det.py --weights {self.pt_file_path.get()} "
                             f"--iou-thres {iou_thresh} " 
                             f"--conf-thres {confidence_thresh} "
                             f"--topk {self.topk.get()} "
@@ -366,9 +366,9 @@ class TensorRTConverterGUI:
                         ]
                     convert_commands+= [
                         f"{self.tensorrt_path.get()}/trtexec --onnx={self.pt_file_path.get().replace('.pt', '.onnx')} "
-                        f"--saveEngine={os.path.join(self.output_location.get(), self.output_name.get() + iou_conf_suffix + '.engine').replace('.pt', '')} "
+                        f"--saveEngine={os.path.join(self.output_location.get(), self.output_name.get() + iou_conf_suffix + '.engine')} "
                         f"--device={self.gpu_device.get()} "
-                        f"--{self.precision.get()}" if self.precision.get() else "fp16"
+                        f"--{self.precision.get()}"
                     ]
 
             if self.mode.get() == "TRAIN & CONVERT":
@@ -418,7 +418,7 @@ class TensorRTConverterGUI:
 
 def main():
     root = tk.Tk()
-    app = TensorRTConverterGUI(root)
+    app = mechanicGUI(root)
     root.mainloop()
 
 if __name__ == "__main__":
